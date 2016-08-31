@@ -73,41 +73,44 @@ class CLI(object):
             print('{}: '.format(choice), end='')
             self.print_game(game)
 
-        chosen = raw_input('Select game {}: '.format(choices.keys()))
-        if not chosen:
-            chosen = 1
-        game = choices[int(chosen)]
-        print(game)
-        print('Downloading...')
+        if choice:
+            chosen = raw_input('Select game {}: '.format(choices.keys()))
+            if not chosen:
+                chosen = 1
+            game = choices[int(chosen)]
+            print(game)
+            print('Downloading...')
 
-        save_path = self.gmr.get_latest_save_file_bytes(game.id)
-        print('Saved to {}'.format(save_path))
+            save_path = self.gmr.get_latest_save_file_bytes(game.id)
+            print('Saved to {}'.format(save_path))
 
-        print('Waiting for completed game...', end='')
-        sys.stdout.flush()
-
-        # TODO: Refactor with callback and maybe timeout
-        glob_path = os.path.join(self.config.save_path, '*.Civ5Save')
-        glob_path = os.path.expanduser(glob_path)
-        original_files = set(glob(glob_path))
-        new_save_path = None
-        while True:
-            time.sleep(1)
-
-            # Callback
-            print('.', end='')
+            print('Waiting for completed game...', end='')
             sys.stdout.flush()
 
-            new_files = set(glob(glob_path))
-            diff = new_files.difference(original_files)
-            if not diff:
-                continue
+            # TODO: Refactor with callback and maybe timeout
+            glob_path = os.path.join(self.config.save_path, '*.Civ5Save')
+            glob_path = os.path.expanduser(glob_path)
+            original_files = set(glob(glob_path))
+            new_save_path = None
+            while True:
+                time.sleep(1)
 
-            new_save_path = list(diff)[0]
-            break
+                # Callback
+                print('.', end='')
+                sys.stdout.flush()
 
-        raw_input('\nFound {}.\nUpload? ctrl-c to abort: '.format(new_save_path))
+                new_files = set(glob(glob_path))
+                diff = new_files.difference(original_files)
+                if not diff:
+                    continue
 
-        # TODO: Handle errors
-        print(self.gmr.submit_turn(game.current_turn.turn_id, new_save_path))
+                new_save_path = list(diff)[0]
+                break
 
+            raw_input('\nFound {}.\nUpload? ctrl-c to abort: '.format(new_save_path))
+
+            # TODO: Handle errors
+            print(self.gmr.submit_turn(game.current_turn.turn_id, new_save_path))
+
+        else:
+            print("No Games.")
